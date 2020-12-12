@@ -6,6 +6,14 @@ if [ ! -d "/messagerie/" ]; then
     sudo chmod 777 "/messagerie/"
 fi   
 
+cd "/messagerie/messages_$(whoami)/"
+
+for file in $( find /messagerie/messages_$(whoami)/ -type f -ctime +1 ! -name "*.tar*"); do
+    file2=$(echo $file | sed -e "s/\/messagerie\/messages_$(whoami)\///g")
+	tar -cvf $file.tar $file2
+	rm $file2
+done
+
 while [ ! "$mode" = "Quitter" ]; do
     mode=$(dialog --stdout --title "Messagerie" --menu "Que voulez vous faire ?" 20 60 15 "Lire ses messages" "" "Envoyer un nouveau message" "" "Quitter" "")
     if [ "$mode" = "Envoyer un nouveau message" ]; then
@@ -65,7 +73,13 @@ while [ ! "$mode" = "Quitter" ]; do
                 messageALire=$(dialog --stdout --title "Messagerie" --menu "Choissiez un message" 20 60 10 $options)
                 queFaire=$(dialog --stdout --title "Messagerie" --menu "Que voulez vous faire ?" 20 60 15 "Lire le message" "" "Supprimer le message" "")
                 if [ "$queFaire" = "Lire le message" ]; then
-                    dialog --stdout --title "Messagerie" --textbox "/messagerie/messages_$(whoami)/$messageALire" 20 60
+                    if [ ${messageALire#*.} = "tar" ]; then
+                        fichier=$(tar -xvf $messageALire)
+                        dialog --stdout --title "Messagerie" --textbox "/messagerie/messages_$(whoami)/$fichier" 20 60
+                        rm $fichier
+                    else 
+                        dialog --stdout --title "Messagerie" --textbox "/messagerie/messages_$(whoami)/$messageALire" 20 60
+                    fi  
                 else
                     if [ "$queFaire" = "Supprimer le message" ]; then
                         rm "/messagerie/messages_$(whoami)/$messageALire"

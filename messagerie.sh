@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ ! -d "/messagerie/" ]; then
-    mkdir "/messagerie/"
-    touch "/messagerie/test"
-    chmod 777 "/messagerie/"
+    sudo mkdir "/messagerie/"
+    sudo touch "/messagerie/test"
+    sudo chmod 777 "/messagerie/"
 fi   
 
 while [ ! "$mode" = "Quitter" ]; do
@@ -39,6 +39,7 @@ while [ ! "$mode" = "Quitter" ]; do
                 continue
             fi  
         done
+        sujet=$(echo $sujet | sed -e "s/ /_/g")
         contenu=$(dialog --stdout --title "Messagerie" --editbox "/messagerie/test" 20 60)
         if [ "$?" = "1" ]; then
             continue
@@ -60,11 +61,17 @@ while [ ! "$mode" = "Quitter" ]; do
             for file in $(ls *); do
                 options+="$file \"\" "
             done
-            messageALire=$(dialog --stdout --title "Messagerie" --menu "Choissiez un message" 20 60 10 $options)
-            if [ "$?" = "1" ]; then
-                continue
-            fi  
-            dialog --stdout --title "Messagerie" --textbox "/messagerie/messages_$(whoami)/$messageALire" 20 60
+            if [ "$options" != "" ]; then
+                messageALire=$(dialog --stdout --title "Messagerie" --menu "Choissiez un message" 20 60 10 $options)
+                queFaire=$(dialog --stdout --title "Messagerie" --menu "Que voulez vous faire ?" 20 60 15 "Lire le message" "" "Supprimer le message" "")
+                if [ "$queFaire" = "Lire le message" ]; then
+                    dialog --stdout --title "Messagerie" --textbox "/messagerie/messages_$(whoami)/$messageALire" 20 60
+                else
+                    if [ "$queFaire" = "Supprimer le message" ]; then
+                        rm "/messagerie/messages_$(whoami)/$messageALire"
+                    fi
+                fi
+            fi
             clear
         else
             if [ "$mode" = "Quitter" ]; then
